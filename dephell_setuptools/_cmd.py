@@ -38,6 +38,7 @@ class CommandReader(BaseReader):
             'distutils_cmd',
             '-o', output_json.name,
         ]
+        # appveyor need original env vars in the subprocesses
         env = {k: v for k, v in os.environ.items() if not k.startswith('PYTHON')}
         env['PYTHONPATH'] = str(Path(__file__).parent.parent)
         with cd(self.path.parent):
