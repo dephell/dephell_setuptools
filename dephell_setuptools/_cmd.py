@@ -38,12 +38,14 @@ class CommandReader(BaseReader):
             'distutils_cmd',
             '-o', output_json.name,
         ]
+        env = {k: v for k, v in os.environ.items() if not k.startswith('PYTHON')}
+        env['PYTHONPATH'] = str(Path(__file__).parent.parent)
         with cd(self.path.parent):
             result = subprocess.run(
                 cmd,
                 stderr=subprocess.PIPE,
                 stdout=subprocess.PIPE,
-                env={'PYTHONPATH': str(Path(__file__).parent.parent)},
+                env=env,
             )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.decode().strip().split('\n')[-1])
