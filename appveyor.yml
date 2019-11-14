@@ -32,6 +32,7 @@ init:
 install:
   - "%PYTHON%/Scripts/pip.exe install pytest"
   - "%PYTHON%/Scripts/pip.exe install pkginfo"
+  - "%PYTHON%/Scripts/pip.exe install setuptools"
 
 test_script:
   - "%PYTHON%/Scripts/pytest"
