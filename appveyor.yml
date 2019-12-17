@@ -27,6 +27,7 @@ environment:
       PY_TAG: "cp37"
 
 init:
+  - "DIR c:\\python35-x64\\lib\\site-packages"
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
 install:
