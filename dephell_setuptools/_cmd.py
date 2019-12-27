@@ -6,7 +6,7 @@ import sys
 from contextlib import contextmanager
 from distutils.core import Command
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import mkstemp
 from typing import Any, Dict
 
 # app
@@ -25,34 +25,46 @@ def cd(path: Path):
         os.chdir(old_path)
 
 
+@contextmanager
+def tmpfile():
+    fd, path = mkstemp()
+    os.close(fd)
+    try:
+        yield Path(path)
+    finally:
+        os.unlink(path)
+
+
 class CommandReader(BaseReader):
     @cached_property
     def content(self) -> Dict[str, Any]:
         # generate a temporary json file which contains the metadata
-        output_json = NamedTemporaryFile()
-        cmd = [
-            sys.executable,
-            self.path.name,
-            '-q',
-            '--command-packages', 'dephell_setuptools',
-            'distutils_cmd',
-            '-o', output_json.name,
-        ]
-        # appveyor need original env vars in the subprocesses
-        env = {k: v for k, v in os.environ.items() if not k.startswith('PYTHON')}
-        env['PYTHONPATH'] = str(Path(__file__).parent.parent)
-        with cd(self.path.parent):
-            result = subprocess.run(
-                cmd,
-                stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                env=env,
-            )
-        if result.returncode != 0:
-            raise RuntimeError(result.stderr.decode().strip().split('\n')[-1])
+        with tmpfile() as output_json:
+            cmd = [
+                sys.executable,
+                self.path.name,
+                '-q',
+                '--command-packages', 'dephell_setuptools',
+                'distutils_cmd',
+                '-o', str(output_json),
+            ]
+            # appveyor need original env vars in the subprocesses
+            env = {k: v for k, v in os.environ.items() if not k.startswith('PYTHON')}
+            env['PYTHONPATH'] = str(Path(__file__).parent.parent)
+            with cd(self.path.parent):
+                with cd(self.path.parent):
+                    result = subprocess.run(
+                        cmd,
+                        stderr=subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                        env=env,
+                    )
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr.decode().strip().split('\n')[-1])
 
-        with open(output_json.name) as stream:
-            content = json.load(stream)
+            with output_json.open() as stream:
+                content = json.load(stream)
+
         return self._clean(content)
 
 
