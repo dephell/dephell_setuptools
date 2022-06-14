@@ -5,7 +5,12 @@ from pathlib import Path
 from typing import Any, Dict, Union
 
 # external
-from setuptools.config import ConfigMetadataHandler, ConfigOptionsHandler
+try:
+    from setuptools.config import ConfigMetadataHandler, ConfigOptionsHandler
+except ImportError:
+    # In setuptools v61.0.0, everything was moved to setuptools.config.setupcfg.
+    # see https://github.com/pypa/setuptools/commit/49b7a60050836868ecd63dc38ad0729626a356f3
+    from setuptools.config.setupcfg import ConfigMetadataHandler, ConfigOptionsHandler
 
 # app
 from ._base import BaseReader
